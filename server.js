@@ -1,7 +1,7 @@
 const express = require("express");
 const cors = require("cors");
-const { Configuration, OpenAIApi } = require("openai");
 const path = require("path");
+const { OpenAI } = require("openai"); // ← v4構文
 
 const app = express();
 const port = process.env.PORT || 10000;
@@ -14,23 +14,22 @@ app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "index.html"));
 });
 
-// OpenAI設定（Renderの環境変数 OPENAI_API_KEY を使う）
-const configuration = new Configuration({
+// OpenAI設定
+const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
-const openai = new OpenAIApi(configuration);
 
-// AIに質問を送って返す
+// APIエンドポイント
 app.post("/api/ask", async (req, res) => {
   const { message } = req.body;
 
   try {
-    const completion = await openai.createChatCompletion({
-      model: "gpt-3.5-turbo", // 必要に応じて変更
+    const chatCompletion = await openai.chat.completions.create({
+      model: "gpt-3.5-turbo",
       messages: [{ role: "user", content: message }],
     });
 
-    const reply = completion.data.choices[0].message.content;
+    const reply = chatCompletion.choices[0].message.content;
     res.json({ reply });
   } catch (error) {
     console.error("OpenAIエラー:", error);
