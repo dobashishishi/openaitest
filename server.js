@@ -9,21 +9,21 @@ const port = process.env.PORT || 10000;
 app.use(cors());
 app.use(express.json());
 
-// public フォルダ内の静的ファイルを提供
-app.use(express.static(path.join(__dirname, "public")));
+// 静的ファイルの場所を「現在のディレクトリ」に変更
+app.use(express.static(__dirname));
 
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
+  apiKey: process.env.OPENAI_API_KEY,
 });
 
 app.post("/quiz", async (req, res) => {
   const { words } = req.body;
 
   if (!words || !Array.isArray(words) || words.length === 0) {
-    return res.status(400).json({ error: "英単語のリストが無効です。" });
+    return res.status(400).json({ error: "英単語リストが不正です。" });
   }
 
-  const prompt = `次の英単語リストからランダムに5問の日本語訳問題を作成してください（形式：Q. 英単語 → 日本語訳）:\n${words.join(", ")}`;
+  const prompt = `次の英単語から5問の日本語訳問題を作ってください:\n${words.join(", ")}`;
 
   try {
     const chatResponse = await openai.chat.completions.create({
@@ -33,9 +33,9 @@ app.post("/quiz", async (req, res) => {
 
     const quiz = chatResponse.choices[0].message.content;
     res.json({ quiz });
-  } catch (error) {
-    console.error("OpenAIエラー:", error);
-    res.status(500).json({ error: "クイズの生成中にエラーが発生しました。" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "OpenAIとの通信に失敗しました。" });
   }
 });
 
