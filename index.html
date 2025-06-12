@@ -1,28 +1,59 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8" />
-  <title>英単語テスト</title>
-  <script defer src="script.js"></script>
+  <meta charset="UTF-8">
+  <title>英単語クイズジェネレーター</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      max-width: 600px;
+      margin: auto;
+      padding: 20px;
+    }
+    textarea {
+      width: 100%;
+      height: 100px;
+    }
+    pre {
+      background: #f4f4f4;
+      padding: 10px;
+      white-space: pre-wrap;
+      border-radius: 5px;
+    }
+  </style>
 </head>
 <body>
-  <h1>英単語テストアプリ</h1>
+  <h1>英単語クイズジェネレーター</h1>
+  <p>① テストしたい英単語をカンマ（,）区切りで入力してください。</p>
+  <textarea id="words" placeholder="例: apple, orange, banana"></textarea>
+  <br><br>
+  <button onclick="generateQuiz()">クイズを作成する</button>
 
-  <div id="step1">
-    <p>テストしたい英単語（カンマ区切り）を入力：</p>
-    <input type="text" id="wordInput" placeholder="例: apple, orange, banana" />
-    <button onclick="startTest()">テスト開始</button>
-  </div>
+  <h2>生成されたクイズ:</h2>
+  <pre id="quizOutput">（ここにクイズが表示されます）</pre>
 
-  <div id="step2" style="display: none;">
-    <p id="question"></p>
-    <input type="text" id="answerInput" placeholder="答えを入力" />
-    <button onclick="submitAnswer()">送信</button>
-  </div>
+  <script>
+    async function generateQuiz() {
+      const wordsText = document.getElementById("words").value;
+      const words = wordsText.split(",").map(w => w.trim()).filter(w => w.length > 0);
+      if (words.length === 0) {
+        alert("英単語を入力してください。");
+        return;
+      }
 
-  <div id="result" style="display: none;">
-    <p id="feedback"></p>
-    <button onclick="nextQuestion()">次の問題へ</button>
-  </div>
+      const response = await fetch("/quiz", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ words })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        document.getElementById("quizOutput").textContent = data.quiz;
+      } else {
+        document.getElementById("quizOutput").textContent = "クイズの生成に失敗しました。";
+      }
+    }
+  </script>
 </body>
 </html>
