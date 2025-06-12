@@ -1,32 +1,24 @@
 const express = require("express");
 const cors = require("cors");
-const OpenAI = require("openai");
+const path = require("path");
 
 const app = express();
+const port = process.env.PORT || 10000;
+
+// ミドルウェア設定
 app.use(cors());
 app.use(express.json());
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
+// ✅ index.html を同じ階層から返す（public フォルダなし対応）
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "index.html"));
 });
 
+// 例：OpenAI API 呼び出しルート（必要に応じて）
 app.post("/api/ask", async (req, res) => {
-  const { message } = req.body;
-
-  try {
-    const chat = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
-      messages: [{ role: "user", content: message }],
-    });
-
-    res.json({ reply: chat.choices[0].message.content });
-  } catch (error) {
-    console.error("OpenAI API Error:", error);
-    res.status(500).json({ error: "OpenAI API request failed" });
-  }
+  // ... OpenAI APIへのリクエスト処理 ...
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+app.listen(port, () => {
+  console.log(`Server is running on port ${port}`);
 });
