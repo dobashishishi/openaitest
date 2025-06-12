@@ -1,59 +1,22 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <title>英単語クイズジェネレーター</title>
-  <style>
-    body {
-      font-family: sans-serif;
-      max-width: 600px;
-      margin: auto;
-      padding: 20px;
-    }
-    textarea {
-      width: 100%;
-      height: 100px;
-    }
-    pre {
-      background: #f4f4f4;
-      padding: 10px;
-      white-space: pre-wrap;
-      border-radius: 5px;
-    }
-  </style>
+  <meta charset="UTF-8" />
+  <title>英単語クイズ（Gemini版）</title>
 </head>
 <body>
-  <h1>英単語クイズジェネレーター</h1>
-  <p>① テストしたい英単語をカンマ（,）区切りで入力してください。</p>
-  <textarea id="words" placeholder="例: apple, orange, banana"></textarea>
-  <br><br>
-  <button onclick="generateQuiz()">クイズを作成する</button>
+  <h1>英単語クイズを作ろう！</h1>
+  <textarea id="wordInput" rows="4" cols="50" placeholder="単語をカンマ区切りで入力してください（例: apple, banana, cat）"></textarea><br />
+  <button id="startBtn">問題を作成</button>
 
-  <h2>生成されたクイズ:</h2>
-  <pre id="quizOutput">（ここにクイズが表示されます）</pre>
+  <div id="quizSection" style="display:none;">
+    <h2>問題</h2>
+    <div id="question"></div>
+    <input type="text" id="answerInput" placeholder="ここに答えを入力" />
+    <button id="submitAnswer">回答送信</button>
+    <div id="result"></div>
+  </div>
 
-  <script>
-    async function generateQuiz() {
-      const wordsText = document.getElementById("words").value;
-      const words = wordsText.split(",").map(w => w.trim()).filter(w => w.length > 0);
-      if (words.length === 0) {
-        alert("英単語を入力してください。");
-        return;
-      }
-
-      const response = await fetch("/quiz", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ words })
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        document.getElementById("quizOutput").textContent = data.quiz;
-      } else {
-        document.getElementById("quizOutput").textContent = "クイズの生成に失敗しました。";
-      }
-    }
-  </script>
+  <script src="script.js"></script>
 </body>
 </html>
