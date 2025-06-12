@@ -6,8 +6,13 @@ require('dotenv').config();
 const app = express();
 app.use(cors());
 app.use(express.json());
+app.use(express.static(__dirname));  // 静的ファイルを配信
 
 const PORT = process.env.PORT || 10000;
+
+app.get('/', (req, res) => {
+  res.sendFile(__dirname + '/index.html');  // トップページ配信
+});
 
 app.post('/api/generateQuiz', async (req, res) => {
   const { words } = req.body; // ["apple", "banana", "cat"] など
@@ -43,10 +48,8 @@ app.post('/api/generateQuiz', async (req, res) => {
       }
     );
 
-    // APIの返却形式に応じてtextを取得
     const text = response.data?.candidates?.[0]?.output || '';
 
-    // GeminiからのJSON形式回答をパースする（エラー時は空配列）
     let quiz = [];
     try {
       quiz = JSON.parse(text);
