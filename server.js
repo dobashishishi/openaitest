@@ -1,39 +1,37 @@
 const express = require("express");
 const cors = require("cors");
-const bodyParser = require("body-parser");
-const { OpenAIApi, Configuration } = require("openai");
+const { OpenAI } = require("openai");
 
 const app = express();
 const port = process.env.PORT || 10000;
 
-const configuration = new Configuration({
-  apiKey: process.env.OPENAI_API_KEY,
+app.use(cors());
+app.use(express.json());
+
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY
 });
 
-const openai = new OpenAIApi(configuration);
-
-app.use(cors());
-app.use(bodyParser.json());
-
 app.post("/quiz", async (req, res) => {
-  const words = req.body.words;
-  if (!words || words.length === 0) {
-    return res.status(400).json({ error: "No words provided." });
+  const { words } = req.body;
+
+  if (!words || !Array.isArray(words) || words.length === 0) {
+    return res.status(400).json({ error: "英単語のリストが無効です。" });
   }
 
-  const prompt = `次の英単語を使って、日本語訳を答えさせる4択クイズを作ってください。単語の順番はランダムにして。英単語: ${words.join(", ")}\n形式：\nQ1: 問題文\nA: a) ..., b) ..., c) ..., d) ...\n正解: ...`;
+  const prompt = `次の英単語リストからランダムに5問の日本語訳問題を作成してください（形式：Q. 英単語 → 日本語訳）:\n${words.join(", ")}`;
 
   try {
-    const completion = await openai.createChatCompletion({
-      model: "gpt-4",
+    const chatResponse = await openai.chat.completions.create({
+      model: "gpt-3.5-turbo",
       messages: [{ role: "user", content: prompt }],
     });
 
-    const quiz = completion.data.choices[0].message.content;
+    const quiz = chatResponse.choices[0].message.content;
     res.json({ quiz });
   } catch (error) {
-    console.error(error.response ? error.response.data : error.message);
-    res.status(500).json({ error: "Failed to create quiz." });
+    console.error("OpenAIエラー:", error);
+    res.status(500).json({ error: "クイズの生成中にエラーが発生しました。" });
   }
 });
 
