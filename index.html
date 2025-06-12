@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>英語学習AIチャット</title>
+</head>
+<body>
+  <h1>英語学習AIチャット</h1>
+  <textarea id="question" rows="4" cols="50" placeholder="英語について質問してみよう"></textarea><br>
+  <button onclick="sendQuestion()">送信</button>
+  <pre id="response"></pre>
+
+  <script>
+    async function sendQuestion() {
+      const question = document.getElementById("question").value;
+      const res = await fetch("/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: question })
+      });
+      const data = await res.json();
+      document.getElementById("response").textContent = data.reply;
+    }
+  </script>
+</body>
+</html>
