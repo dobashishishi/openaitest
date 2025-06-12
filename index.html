@@ -1,29 +1,28 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <title>AI英語質問アプリ</title>
+  <meta charset="UTF-8" />
+  <title>英単語テスト</title>
+  <script defer src="script.js"></script>
 </head>
 <body>
-  <h1>AIに英語の質問をしてみよう！</h1>
-  <input type="text" id="userInput" placeholder="例: What is the difference between 'say' and 'tell'?" size="50">
-  <button onclick="sendQuestion()">送信</button>
-  <p><strong>AIの回答:</strong></p>
-  <div id="response"></div>
+  <h1>英単語テストアプリ</h1>
 
-  <script>
-    async function sendQuestion() {
-      const question = document.getElementById("userInput").value;
-      const res = await fetch("/api/ask", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ message: question })
-      });
-      const data = await res.json();
-      document.getElementById("response").innerText = data.reply;
-    }
-  </script>
+  <div id="step1">
+    <p>テストしたい英単語（カンマ区切り）を入力：</p>
+    <input type="text" id="wordInput" placeholder="例: apple, orange, banana" />
+    <button onclick="startTest()">テスト開始</button>
+  </div>
+
+  <div id="step2" style="display: none;">
+    <p id="question"></p>
+    <input type="text" id="answerInput" placeholder="答えを入力" />
+    <button onclick="submitAnswer()">送信</button>
+  </div>
+
+  <div id="result" style="display: none;">
+    <p id="feedback"></p>
+    <button onclick="nextQuestion()">次の問題へ</button>
+  </div>
 </body>
 </html>
