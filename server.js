@@ -1,5 +1,6 @@
 const express = require("express");
 const cors = require("cors");
+const path = require("path");
 const { OpenAI } = require("openai");
 
 const app = express();
@@ -7,6 +8,9 @@ const port = process.env.PORT || 10000;
 
 app.use(cors());
 app.use(express.json());
+
+// public フォルダ内の静的ファイルを提供
+app.use(express.static(path.join(__dirname, "public")));
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
