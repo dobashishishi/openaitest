@@ -1,44 +1,66 @@
-const express = require("express");
-const cors = require("cors");
-const path = require("path");
-const { OpenAI } = require("openai");
+const express = require('express');
+const cors = require('cors');
+const axios = require('axios');
+require('dotenv').config();
 
 const app = express();
-const port = process.env.PORT || 10000;
-
 app.use(cors());
 app.use(express.json());
 
-// 静的ファイルの場所を「現在のディレクトリ」に変更
-app.use(express.static(__dirname));
+const PORT = process.env.PORT || 10000;
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+app.post('/api/generateQuiz', async (req, res) => {
+  const { words } = req.body; // ["apple", "banana", "cat"] など
 
-app.post("/quiz", async (req, res) => {
-  const { words } = req.body;
-
-  if (!words || !Array.isArray(words) || words.length === 0) {
-    return res.status(400).json({ error: "英単語リストが不正です。" });
+  if (!words || words.length === 0) {
+    return res.status(400).json({ error: '単語リストが空です。' });
   }
 
-  const prompt = `次の英単語から5問の日本語訳問題を作ってください:\n${words.join(", ")}`;
+  const prompt = `
+次の単語の英語テストの問題をランダムな順番で3問作ってください。  
+単語リスト: ${words.join(', ')}  
+問題文形式は「日本語で単語の意味を答えてください」としてください。  
+答えも一緒に出力してください。JSON形式で以下のようにお願いします。  
+[
+  {"question": "appleの意味は？", "answer": "りんご"},
+  ...
+]
+`;
 
   try {
-    const chatResponse = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
-      messages: [{ role: "user", content: prompt }],
-    });
+    const response = await axios.post(
+      'https://generativelanguage.googleapis.com/v1beta2/models/text-bison-001:generateText',
+      {
+        prompt: { text: prompt },
+        temperature: 0.7,
+        maxOutputTokens: 500,
+      },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${process.env.GEMINI_API_KEY}`,
+        },
+      }
+    );
 
-    const quiz = chatResponse.choices[0].message.content;
+    // APIの返却形式に応じてtextを取得
+    const text = response.data?.candidates?.[0]?.output || '';
+
+    // GeminiからのJSON形式回答をパースする（エラー時は空配列）
+    let quiz = [];
+    try {
+      quiz = JSON.parse(text);
+    } catch {
+      return res.status(500).json({ error: 'クイズの解析に失敗しました。', raw: text });
+    }
+
     res.json({ quiz });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "OpenAIとの通信に失敗しました。" });
+  } catch (error) {
+    console.error(error.response?.data || error.message || error);
+    res.status(500).json({ error: 'クイズの生成に失敗しました。' });
   }
 });
 
-app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });
