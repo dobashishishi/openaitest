@@ -1,43 +1,39 @@
-const express = require('express');
-const cors = require('cors');
-const bodyParser = require('body-parser');
-const { OpenAI } = require('openai');
+const express = require("express");
+const cors = require("cors");
+const bodyParser = require("body-parser");
+const { OpenAIApi, Configuration } = require("openai");
 
 const app = express();
 const port = process.env.PORT || 10000;
 
-app.use(cors());
-app.use(bodyParser.json());
-app.use(express.static('public')); // index.html などを public フォルダに入れる場合
-
-// OpenAI 初期設定（環境変数 OPENAI_API_KEY を使用）
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
+const configuration = new Configuration({
+  apiKey: process.env.OPENAI_API_KEY,
 });
 
-app.post('/check', async (req, res) => {
-  const { word, answer } = req.body;
+const openai = new OpenAIApi(configuration);
+
+app.use(cors());
+app.use(bodyParser.json());
+
+app.post("/quiz", async (req, res) => {
+  const words = req.body.words;
+  if (!words || words.length === 0) {
+    return res.status(400).json({ error: "No words provided." });
+  }
+
+  const prompt = `次の英単語を使って、日本語訳を答えさせる4択クイズを作ってください。単語の順番はランダムにして。英単語: ${words.join(", ")}\n形式：\nQ1: 問題文\nA: a) ..., b) ..., c) ..., d) ...\n正解: ...`;
 
   try {
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-3.5-turbo',
-      messages: [
-        {
-          role: "system",
-          content: "あなたは英単語の意味を採点する先生です。"
-        },
-        {
-          role: "user",
-          content: `次の英単語の意味として、"${answer}" は正しいか判定し、簡単な解説もつけてください。単語: ${word}`
-        }
-      ]
+    const completion = await openai.createChatCompletion({
+      model: "gpt-4",
+      messages: [{ role: "user", content: prompt }],
     });
 
-    const feedback = completion.choices[0].message.content.trim();
-    res.json({ feedback });
+    const quiz = completion.data.choices[0].message.content;
+    res.json({ quiz });
   } catch (error) {
-    console.error("OpenAIエラー:", error);
-    res.status(500).json({ feedback: "AIの応答中にエラーが発生しました。" });
+    console.error(error.response ? error.response.data : error.message);
+    res.status(500).json({ error: "Failed to create quiz." });
   }
 });
 
